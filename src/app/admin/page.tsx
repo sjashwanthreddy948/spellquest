@@ -23,10 +23,24 @@ import {
   ExternalLink,
   Sparkles,
   Flame,
+  Copy,
+  Check,
+  Cloud,
+  UploadCloud,
+  DownloadCloud,
+  Server,
 } from 'lucide-react';
 import { WordAttempt, SRSItem } from '@/types';
 import { GameState, getUserRegistry, USERS_REGISTRY_KEY, saveUserToRegistry } from '@/lib/game/gameStore';
-import { isSupabaseConfigured, getSupabase } from '@/lib/supabase/client';
+import {
+  isSupabaseConfigured,
+  getSupabase,
+  getSupabaseConfig,
+  saveCustomSupabaseConfig,
+  clearCustomSupabaseConfig,
+  testSupabaseConnection,
+  SupabaseConfigInfo,
+} from '@/lib/supabase/client';
 import { playClickSound } from '@/lib/spelling/audio';
 
 // Pre-defined Admin Credentials
@@ -69,13 +83,31 @@ export default function AdminPortalPage() {
   const [students, setStudents] = useState<StudentAnalytics[]>([]);
   const [currentTime, setCurrentTime] = useState<string>('');
 
-  // Check existing session
+  // Database Connection States
+  const [dbConfig, setDbConfig] = useState<SupabaseConfigInfo>({
+    url: '',
+    key: '',
+    isConfigured: false,
+    source: 'none',
+  });
+  const [urlInput, setUrlInput] = useState<string>('');
+  const [keyInput, setKeyInput] = useState<string>('');
+  const [isTestingDb, setIsTestingDb] = useState<boolean>(false);
+  const [dbTestMessage, setDbTestMessage] = useState<{ success: boolean; message: string; latencyMs?: number } | null>(null);
+  const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
+  const [copiedSchema, setCopiedSchema] = useState<boolean>(false);
+
+  // Check existing session and database configuration
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedAuth = sessionStorage.getItem('spellquest_admin_auth');
       if (savedAuth === 'true') {
         setIsAuthenticated(true);
       }
+      const cfg = getSupabaseConfig();
+      setDbConfig(cfg);
+      setUrlInput(cfg.url);
+      setKeyInput(cfg.key);
     }
   }, []);
 
@@ -442,22 +474,231 @@ export default function AdminPortalPage() {
     }
   };
 
-  // Cloud sync trigger
-  const handleCloudSync = async () => {
-    const supabase = getSupabase();
-    if (!supabase) {
-      setSyncStatusMessage('Offline / Local Storage Mode Active. (Supabase cloud env variables not set).');
+  // Test & Save Supabase Connection
+  const handleTestAndConnectDb = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!urlInput.trim() || !keyInput.trim()) {
+      setDbTestMessage({ success: false, message: 'Please enter both Supabase Project URL and Anon API Key.' });
       return;
     }
-    setSyncStatusMessage('Connecting to Supabase PostgreSQL...');
-    try {
-      // Sync logic
-      setTimeout(() => {
-        setSyncStatusMessage('Supabase Cloud Database synchronized with 0 conflicts.');
-      }, 800);
-    } catch {
-      setSyncStatusMessage('Supabase connection failed. Reverting to local registry.');
+
+    setIsTestingDb(true);
+    setDbTestMessage(null);
+    playClickSound();
+
+    const res = await testSupabaseConnection(urlInput, keyInput);
+    setIsTestingDb(false);
+    setDbTestMessage(res);
+
+    if (res.success) {
+      saveCustomSupabaseConfig(urlInput, keyInput);
+      const newCfg = getSupabaseConfig();
+      setDbConfig(newCfg);
+      setSyncStatusMessage(`Supabase connection saved and verified (${res.latencyMs || 0}ms latency).`);
     }
+  };
+
+  // Disconnect Supabase
+  const handleDisconnectDb = () => {
+    playClickSound();
+    clearCustomSupabaseConfig();
+    const newCfg = getSupabaseConfig();
+    setDbConfig(newCfg);
+    setUrlInput('');
+    setKeyInput('');
+    setDbTestMessage({ success: true, message: 'Disconnected from cloud database. Reverted to high-speed local offline storage.' });
+    setSyncStatusMessage('Storage mode: Local Offline Registry.');
+  };
+
+  // Push Local Students & Attempts to Supabase Cloud
+  const handlePushToCloud = async () => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      setSyncStatusMessage('Offline mode. Please enter and connect your Supabase database credentials above.');
+      return;
+    }
+
+    setIsSyncingCloud(true);
+    setSyncStatusMessage('Pushing student records to Supabase PostgreSQL...');
+    try {
+      const registry = getUserRegistry();
+      let pushedStudents = 0;
+
+      for (const [key, userState] of Object.entries(registry)) {
+        if (!userState?.profile) continue;
+
+        // Upsert student
+        const { error: sErr } = await supabase.from('students').upsert({
+          id: userState.profile.id || key,
+          name: userState.profile.name,
+          contact: userState.profile.contact || key,
+          email: userState.currentUser?.email || (key.includes('@') ? key : null),
+          grade: userState.profile.grade || 'Grade 3',
+          level: userState.profile.level || 1,
+          xp: userState.profile.xp || 0,
+          coins: userState.profile.coins || 50,
+          streak_days: userState.profile.streakDays || 1,
+          current_stage: userState.profile.currentStage || 1,
+          avatar: userState.profile.avatar || '🦊',
+          companion_id: userState.profile.companionId || 'luna',
+          title: userState.profile.title || 'Apprentice Speller',
+          last_active: new Date().toISOString(),
+        });
+
+        if (!sErr) pushedStudents++;
+
+        // Batch upsert attempts if any
+        if (userState.attempts && userState.attempts.length > 0) {
+          const attemptsPayload = userState.attempts.map((att: WordAttempt) => ({
+            id: att.id,
+            student_id: userState.profile.id || key,
+            word_id: att.wordId,
+            word: att.word,
+            submitted_answer: att.submittedAnswer || att.word,
+            is_correct: att.isCorrect,
+            attempt_number: att.attemptNumber || 1,
+            response_time_ms: att.responseTimeMs || 0,
+            mistake_type: att.mistakeType || null,
+            game_mode: att.gameMode || 'spell_it',
+            created_at: att.timestamp || new Date().toISOString(),
+          }));
+
+          await supabase.from('word_attempts').upsert(attemptsPayload);
+        }
+      }
+
+      setSyncStatusMessage(`Cloud Push Complete! Successfully synced ${pushedStudents} students and attempts to Supabase.`);
+    } catch (err: any) {
+      setSyncStatusMessage(`Push Error: ${err.message || 'Failed to sync with Supabase tables'}.`);
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  };
+
+  // Pull Remote Students from Supabase Cloud
+  const handlePullFromCloud = async () => {
+    const supabase = getSupabase();
+    if (!supabase) {
+      setSyncStatusMessage('Offline mode. Please connect your Supabase database first.');
+      return;
+    }
+
+    setIsSyncingCloud(true);
+    setSyncStatusMessage('Querying remote student records from Supabase...');
+    try {
+      const { data: remoteStudents, error } = await supabase.from('students').select('*');
+      if (error) throw error;
+
+      if (!remoteStudents || remoteStudents.length === 0) {
+        setSyncStatusMessage('Connected to Supabase, but the "students" table has no records yet.');
+        return;
+      }
+
+      const registry = getUserRegistry();
+      let importedCount = 0;
+
+      remoteStudents.forEach((row: any) => {
+        const contactKey = (row.contact || row.id).toLowerCase();
+        if (!registry[contactKey]) {
+          registry[contactKey] = {
+            profile: {
+              id: row.id,
+              name: row.name,
+              grade: row.grade || 'Grade 3',
+              level: row.level || 1,
+              avatar: row.avatar || '🦊',
+              companion: 'Luna',
+              companionId: row.companion_id || 'luna',
+              title: row.title || 'Apprentice Speller',
+              xp: row.xp || 0,
+              coins: row.coins || 50,
+              hearts: 3,
+              maxHearts: 3,
+              streakDays: row.streak_days || 1,
+              lastActiveDate: row.last_active || new Date().toISOString(),
+              completedAssessment: true,
+              currentStage: row.current_stage || 1,
+              activeWorldId: 'world_woods',
+              contact: row.contact,
+              unlockedAvatars: ['🦊'],
+              unlockedTitles: ['Apprentice Speller'],
+              unlockedCompanions: ['luna'],
+            },
+            currentUser: {
+              name: row.name,
+              contact: row.contact,
+              email: row.email,
+              isLoggedIn: true,
+            },
+            worlds: [],
+            srsQueue: [],
+            attempts: [],
+            dailyMissions: [],
+            achievements: [],
+            userRole: 'student',
+            parentPin: '1234',
+            justUnlockedStage: null,
+          };
+          importedCount++;
+        }
+      });
+
+      localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(registry));
+      loadStudentsData();
+      setSyncStatusMessage(`Cloud Pull Complete! Merged ${importedCount} new student records from Supabase.`);
+    } catch (err: any) {
+      setSyncStatusMessage(`Pull Error: ${err.message || 'Failed to fetch from Supabase'}.`);
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  };
+
+  // Copy Supabase SQL Schema
+  const handleCopySqlSchema = () => {
+    const schemaSql = `-- SpellQuest Supabase Schema
+CREATE TABLE IF NOT EXISTS students (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  contact TEXT UNIQUE,
+  email TEXT,
+  grade TEXT DEFAULT 'Grade 3',
+  level INTEGER DEFAULT 1,
+  xp INTEGER DEFAULT 0,
+  coins INTEGER DEFAULT 50,
+  streak_days INTEGER DEFAULT 1,
+  current_stage INTEGER DEFAULT 1,
+  avatar TEXT DEFAULT '🦊',
+  companion_id TEXT DEFAULT 'luna',
+  title TEXT DEFAULT 'Apprentice Speller',
+  last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS word_attempts (
+  id TEXT PRIMARY KEY,
+  student_id TEXT REFERENCES students(id) ON DELETE CASCADE,
+  word_id TEXT NOT NULL,
+  word TEXT NOT NULL,
+  submitted_answer TEXT NOT NULL,
+  is_correct BOOLEAN NOT NULL,
+  attempt_number INTEGER DEFAULT 1,
+  response_time_ms INTEGER DEFAULT 0,
+  mistake_type TEXT,
+  game_mode TEXT DEFAULT 'spell_it',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE word_attempts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access" ON students FOR SELECT USING (true);
+CREATE POLICY "Allow public insert/update access" ON students FOR ALL USING (true);
+CREATE POLICY "Allow public read attempts" ON word_attempts FOR SELECT USING (true);
+CREATE POLICY "Allow public insert attempts" ON word_attempts FOR ALL USING (true);
+`;
+    navigator.clipboard.writeText(schemaSql);
+    setCopiedSchema(true);
+    setTimeout(() => setCopiedSchema(false), 3000);
   };
 
   // Filter students
@@ -1056,75 +1297,242 @@ export default function AdminPortalPage() {
       {/* Database Controls Modal */}
       {showDbModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-lg rounded-3xl bg-slate-900 border border-indigo-500/30 p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl bg-slate-900 border border-indigo-500/30 p-6 shadow-2xl space-y-5">
+            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
-                <Database className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-base font-black text-white">Database & Cloud Storage Controls</h3>
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                  <Database className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Database & Cloud Storage Control Center</h3>
+                  <p className="text-[11px] text-slate-400">Manage offline storage, Supabase PostgreSQL, and backups</p>
+                </div>
               </div>
               <button
                 onClick={() => setShowDbModal(false)}
-                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white"
+                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <span className="font-bold text-slate-300 block">Current Storage Status</span>
-                <p className="text-slate-400 leading-relaxed">
-                  • <strong>Local Registry:</strong> Active ({students.length} student records in{' '}
-                  <code className="text-amber-300 font-mono">spellquest_user_accounts_v3</code>)
-                  <br />
-                  • <strong>Cloud Engine:</strong> {isSupabaseConfigured ? 'Supabase Connected' : 'Local Offline Mode (Ready for Supabase)'}
-                </p>
+            {/* Storage Status Overview */}
+            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-300">Active Storage Architecture:</span>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
+                    dbConfig.isConfigured
+                      ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-indigo-950/80 text-indigo-300 border border-indigo-500/40'
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      dbConfig.isConfigured ? 'bg-emerald-400 animate-pulse' : 'bg-indigo-400'
+                    }`}
+                  />
+                  <span>{dbConfig.isConfigured ? 'Cloud Sync Enabled' : 'Local Offline Mode Active'}</span>
+                </span>
               </div>
 
+              <div className="text-[11px] text-slate-400 space-y-1">
+                <p>
+                  • <strong>Local Registry:</strong> {students.length} student profiles recorded in{' '}
+                  <code className="text-amber-300 font-mono">spellquest_user_accounts_v3</code>
+                </p>
+                <p>
+                  • <strong>Supabase Endpoint:</strong>{' '}
+                  {dbConfig.url ? (
+                    <span className="font-mono text-emerald-300 truncate inline-block max-w-[280px] align-bottom">
+                      {dbConfig.url}
+                    </span>
+                  ) : (
+                    <span className="text-slate-500 italic">Not connected (Offline-First mode active)</span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Database Connection Credentials Form */}
+            <form onSubmit={handleTestAndConnectDb} className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-white">
+                  <Server className="w-4 h-4 text-indigo-400" />
+                  <span>Connect Supabase Cloud Database</span>
+                </div>
+                {dbConfig.isConfigured && (
+                  <button
+                    type="button"
+                    onClick={handleDisconnectDb}
+                    className="text-[10px] font-bold text-rose-400 hover:underline cursor-pointer"
+                  >
+                    Disconnect
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-300 block">
+                  Supabase Project URL
+                </label>
+                <input
+                  type="url"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  placeholder="https://your-project-ref.supabase.co"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-750 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-300 block">
+                  Supabase Anon Public API Key
+                </label>
+                <input
+                  type="password"
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-750 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              {dbTestMessage && (
+                <div
+                  className={`p-2.5 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+                    dbTestMessage.success
+                      ? 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300'
+                      : 'bg-rose-950/70 border-rose-500/40 text-rose-300'
+                  }`}
+                >
+                  {dbTestMessage.success ? (
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  )}
+                  <span>{dbTestMessage.message}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isTestingDb}
+                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold transition cursor-pointer flex items-center justify-center gap-2 shadow"
+              >
+                {isTestingDb ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Verifying Database Connection...</span>
+                  </>
+                ) : (
+                  <>
+                    <Database className="w-3.5 h-3.5" />
+                    <span>Test & Save Database Connection</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Cloud Sync Controls */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-white uppercase tracking-wider block">
+                Bidirectional Cloud Sync Controls
+              </span>
+
               {syncStatusMessage && (
-                <div className="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-indigo-200 font-medium">
+                <div className="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-indigo-200 text-xs font-medium">
                   {syncStatusMessage}
                 </div>
               )}
 
-              <div className="space-y-2 pt-1">
+              <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
-                  onClick={handleCloudSync}
-                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold flex items-center justify-center gap-2 transition cursor-pointer"
+                  type="button"
+                  onClick={handlePushToCloud}
+                  disabled={isSyncingCloud}
+                  className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 hover:text-white font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>Sync Cloud Database Now</span>
+                  <UploadCloud className="w-4 h-4 text-emerald-400" />
+                  <span>Push to Cloud</span>
                 </button>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={handleExportJson}
-                    className="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center gap-2 transition cursor-pointer"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Export JSON Backup</span>
-                  </button>
-
-                  <label className="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center gap-2 transition cursor-pointer text-center">
-                    <Upload className="w-4 h-4" />
-                    <span>Restore Backup</span>
-                    <input
-                      type="file"
-                      accept=".json"
-                      onChange={handleImportJson}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
+                <button
+                  type="button"
+                  onClick={handlePullFromCloud}
+                  disabled={isSyncingCloud}
+                  className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 hover:text-white font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <DownloadCloud className="w-4 h-4 text-indigo-400" />
+                  <span>Pull from Cloud</span>
+                </button>
               </div>
             </div>
 
+            {/* SQL Table Schema Copy Utility */}
+            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-white block">PostgreSQL Schema (schema.sql)</span>
+                  <span className="text-[11px] text-slate-400">Run this query in Supabase SQL editor to create tables</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopySqlSchema}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  {copiedSchema ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy SQL</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* JSON Backup & Restore */}
+            <div className="space-y-2 text-xs">
+              <span className="font-bold text-white uppercase tracking-wider block">
+                Local Database Portability & Backups
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportJson}
+                  className="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center gap-2 transition cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-amber-400" />
+                  <span>Export JSON Backup</span>
+                </button>
+
+                <label className="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center gap-2 transition cursor-pointer text-center">
+                  <Upload className="w-4 h-4 text-indigo-400" />
+                  <span>Restore JSON</span>
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportJson}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Done Button */}
             <div className="pt-2 border-t border-slate-800 flex justify-end">
               <button
+                type="button"
                 onClick={() => setShowDbModal(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer transition shadow"
               >
-                Done
+                Close Control Center
               </button>
             </div>
           </div>
