@@ -40,7 +40,13 @@ export default function MobileDashboardPage() {
   const masteredCount = state.srsQueue.filter((i) => i.status === 'mastered').length;
   const totalEncountered = state.srsQueue.length;
   const masteryPercentage = totalEncountered > 0 ? Math.round((masteredCount / totalEncountered) * 100) : 0;
-  const stageProgressPercentage = Math.min(100, Math.round((currentStageNum / activeWorld.stages.length) * 100));
+  const completedStagesCount = activeWorld?.stages
+    ? activeWorld.stages.filter((s) => s.stars > 0).length
+    : 0;
+  const stageProgressPercentage =
+    activeWorld?.stages && activeWorld.stages.length > 0
+      ? Math.min(100, Math.round((completedStagesCount / activeWorld.stages.length) * 100))
+      : 0;
 
   // Category and phonics pattern percentages
   const patternCounts: Record<string, { total: number; correct: number }> = {};
@@ -190,14 +196,14 @@ export default function MobileDashboardPage() {
               <div className="flex justify-between text-[11px] font-bold text-slate-200">
                 <span>Stage Progress</span>
                 <span className="font-mono text-amber-300 font-black">
-                  {Math.min(100, Math.round((currentStageNum / activeWorld.stages.length) * 100))}%
+                  {stageProgressPercentage}%
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
                 <div
                   className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 transition-all duration-500"
                   style={{
-                    width: `${Math.min(100, Math.round((currentStageNum / activeWorld.stages.length) * 100))}%`,
+                    width: `${stageProgressPercentage}%`,
                   }}
                 />
               </div>
@@ -301,7 +307,7 @@ export default function MobileDashboardPage() {
               {stageProgressPercentage}%
             </div>
             <span className="text-[10px] text-slate-300 font-medium block truncate">
-              Stage {currentStageNum}/{activeWorld.stages.length}
+              {completedStagesCount}/{activeWorld.stages.length} Completed
             </span>
             <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden mt-1">
               <div

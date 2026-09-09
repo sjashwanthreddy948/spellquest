@@ -171,9 +171,12 @@ export default function AdminPortalPage() {
       const mastPct = totalEnc > 0 ? Math.round((mastered / totalEnc) * 100) : 0;
 
       const activeWorld = state.worlds ? state.worlds[0] : null;
-      const totalStg = activeWorld && activeWorld.stages ? activeWorld.stages.length : 10;
-      const curStg = state.profile.currentStage || 1;
-      const stagePct = Math.min(100, Math.round((curStg / totalStg) * 100));
+      const totalStg = activeWorld && activeWorld.stages ? activeWorld.stages.length : 6;
+      const completedStg = activeWorld && activeWorld.stages
+        ? activeWorld.stages.filter((s: any) => s.stars > 0).length
+        : 0;
+      const curStg = state.profile?.currentStage || 1;
+      const stagePct = totalStg > 0 ? Math.min(100, Math.round((completedStg / totalStg) * 100)) : 0;
 
       const patternCounts: Record<string, { total: number; correct: number }> = {};
       if (state.attempts) {
