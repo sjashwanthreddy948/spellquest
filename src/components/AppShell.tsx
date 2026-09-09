@@ -66,15 +66,17 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     );
   }
 
-  // Authenticated Student & Parent App Pages (/adventure, /dashboard, /achievements, /shop, /profile, /parent-dashboard)
+  // Authenticated Student App Pages (/adventure, /dashboard, /achievements, /shop, /profile)
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 antialiased">
       <MobileTopHeader />
       <PWAInstallBanner />
       <StageUnlockModal />
-      <main className="flex-1 w-full max-w-md md:max-w-2xl lg:max-w-5xl mx-auto pb-28 px-3 sm:px-4 pt-2">
+      <main className="flex-1 w-full max-w-md md:max-w-2xl lg:max-w-5xl mx-auto pb-12 px-3 sm:px-4 pt-2">
         {children}
       </main>
+      <Footer />
+      <div className="h-16 md:hidden" /> {/* Spacer for fixed mobile bottom nav */}
       <MobileBottomNav />
     </div>
   );
