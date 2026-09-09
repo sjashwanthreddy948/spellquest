@@ -15,8 +15,8 @@ import { getFreshAchievements, getFreshDailyMissions } from '@/data/achievements
 import { recordSRSAttempt } from '@/lib/spelling/srs';
 import { getSupabase } from '@/lib/supabase/client';
 
-const STORAGE_KEY = 'spellquest_game_state_v3';
-const USERS_REGISTRY_KEY = 'spellquest_user_accounts_v3';
+export const STORAGE_KEY = 'spellquest_game_state_v3';
+export const USERS_REGISTRY_KEY = 'spellquest_user_accounts_v3';
 
 export interface AuthUser {
   contact?: string;
@@ -83,7 +83,7 @@ export const INITIAL_GAME_STATE: GameState = {
   justUnlockedStage: null,
 };
 
-function getUserRegistry(): Record<string, GameState> {
+export function getUserRegistry(): Record<string, GameState> {
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(USERS_REGISTRY_KEY);
@@ -93,7 +93,7 @@ function getUserRegistry(): Record<string, GameState> {
   }
 }
 
-function saveUserToRegistry(contactOrKey: string, userState: GameState) {
+export function saveUserToRegistry(contactOrKey: string, userState: GameState) {
   if (typeof window === 'undefined' || !contactOrKey) return;
   try {
     const registry = getUserRegistry();

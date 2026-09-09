@@ -33,6 +33,50 @@ export default function MobileDashboardPage() {
       ? '/images/luna.jpg'
       : '/images/sparky.jpg';
 
+  // Live Performance Percentage Metrics
+  const totalAttempts = state.attempts.length;
+  const correctAttempts = state.attempts.filter((a) => a.isCorrect).length;
+  const accuracyPercentage = totalAttempts > 0 ? Math.round((correctAttempts / totalAttempts) * 100) : 0;
+  const masteredCount = state.srsQueue.filter((i) => i.status === 'mastered').length;
+  const totalEncountered = state.srsQueue.length;
+  const masteryPercentage = totalEncountered > 0 ? Math.round((masteredCount / totalEncountered) * 100) : 0;
+  const stageProgressPercentage = Math.min(100, Math.round((currentStageNum / activeWorld.stages.length) * 100));
+
+  // Category and phonics pattern percentages
+  const patternCounts: Record<string, { total: number; correct: number }> = {};
+  state.attempts.forEach((att) => {
+    const key = att.mistakeType || 'Vocabulary Quest';
+    if (!patternCounts[key]) {
+      patternCounts[key] = { total: 0, correct: 0 };
+    }
+    patternCounts[key].total += 1;
+    if (att.isCorrect) {
+      patternCounts[key].correct += 1;
+    }
+  });
+  const patternEntries = Object.entries(patternCounts);
+
+  // Dynamic greeting synchronized with phone's local time
+  const [greeting, setGreeting] = React.useState<string>('Welcome');
+
+  React.useEffect(() => {
+    const updateGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour >= 4 && hour < 12) {
+        setGreeting('Good morning');
+      } else if (hour >= 12 && hour < 17) {
+        setGreeting('Good afternoon');
+      } else if (hour >= 17 && hour < 21) {
+        setGreeting('Good evening');
+      } else {
+        setGreeting('Good night');
+      }
+    };
+    updateGreeting();
+    const interval = setInterval(updateGreeting, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Tree stage visual
   const streak = state.profile.streakDays;
   let treeStage = '🌱';
@@ -56,7 +100,7 @@ export default function MobileDashboardPage() {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            Hi {state.profile.name}! 🚀
+            {greeting}, {state.profile.name}! 🚀
           </h1>
           <div className="flex items-center gap-2 text-xs font-bold text-slate-200">
             <span className="flex items-center gap-1 text-amber-400">
@@ -162,6 +206,161 @@ export default function MobileDashboardPage() {
           <Compass className="w-4 h-4 text-indigo-400" />
           <span>Adventure Map</span>
         </Link>
+      </div>
+
+      {/* Live Student Performance & Percentage Dashboard (Direct Website View) */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-slate-900 border-2 border-indigo-500/30 shadow-xl space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-base shadow-sm">
+              📊
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-black text-white">
+                Student Quest Percentages
+              </h3>
+              <span className="text-[11px] text-slate-300 font-medium block">
+                Live performance dashboard for {state.profile.name}
+              </span>
+            </div>
+          </div>
+
+          <span
+            className={`text-[11px] font-black px-2.5 py-1 rounded-xl border ${
+              accuracyPercentage >= 85
+                ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
+                : accuracyPercentage >= 70
+                ? 'bg-amber-950/80 border-amber-500/50 text-amber-300'
+                : 'bg-indigo-950/80 border-indigo-500/50 text-indigo-300'
+            }`}
+          >
+            {accuracyPercentage >= 85
+              ? '🌟 Star Speller'
+              : accuracyPercentage >= 70
+              ? '🎯 On Track'
+              : '🌱 Growing Speller'}
+          </span>
+        </div>
+
+        {/* Core Percentage Dials */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
+          {/* Accuracy % */}
+          <div className="p-3 rounded-2xl bg-slate-950/90 border border-emerald-500/30 space-y-1 shadow-inner">
+            <span className="text-[10px] uppercase font-bold text-emerald-400 block tracking-wider">
+              Accuracy
+            </span>
+            <div className="text-xl sm:text-2xl font-black text-emerald-400">
+              {accuracyPercentage}%
+            </div>
+            <span className="text-[10px] text-slate-300 font-medium block truncate">
+              {correctAttempts}/{totalAttempts} Correct
+            </span>
+            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden mt-1">
+              <div
+                className="h-full bg-emerald-400 transition-all duration-500"
+                style={{ width: `${accuracyPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Adventure Progression % */}
+          <div className="p-3 rounded-2xl bg-slate-950/90 border border-amber-500/30 space-y-1 shadow-inner">
+            <span className="text-[10px] uppercase font-bold text-amber-400 block tracking-wider">
+              Stage Quest
+            </span>
+            <div className="text-xl sm:text-2xl font-black text-amber-300">
+              {stageProgressPercentage}%
+            </div>
+            <span className="text-[10px] text-slate-300 font-medium block truncate">
+              Stage {currentStageNum}/{activeWorld.stages.length}
+            </span>
+            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden mt-1">
+              <div
+                className="h-full bg-amber-400 transition-all duration-500"
+                style={{ width: `${stageProgressPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Word Mastery % */}
+          <div className="p-3 rounded-2xl bg-slate-950/90 border border-indigo-500/30 space-y-1 shadow-inner">
+            <span className="text-[10px] uppercase font-bold text-indigo-400 block tracking-wider">
+              Word Mastery
+            </span>
+            <div className="text-xl sm:text-2xl font-black text-indigo-300">
+              {masteryPercentage}%
+            </div>
+            <span className="text-[10px] text-slate-300 font-medium block truncate">
+              {masteredCount}/{totalEncountered} Mastered
+            </span>
+            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden mt-1">
+              <div
+                className="h-full bg-indigo-400 transition-all duration-500"
+                style={{ width: `${masteryPercentage}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Pattern Breakdown if attempts exist */}
+        {totalAttempts > 0 && patternEntries.length > 0 ? (
+          <div className="pt-2 border-t border-slate-800/80 space-y-2">
+            <span className="text-[11px] font-bold text-slate-300 block">
+              Pattern & Phonics Accuracy Percentages:
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {patternEntries.slice(0, 4).map(([pattern, data]) => {
+                const patAcc = Math.round((data.correct / data.total) * 100);
+                return (
+                  <div
+                    key={pattern}
+                    className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="text-xs font-bold text-slate-200 block truncate max-w-[130px] sm:max-w-[170px]">
+                        {pattern}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {data.correct}/{data.total} correct
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-xs font-mono font-black ${
+                          patAcc >= 85
+                            ? 'text-emerald-400'
+                            : patAcc >= 70
+                            ? 'text-amber-400'
+                            : 'text-rose-400'
+                        }`}
+                      >
+                        {patAcc}%
+                      </span>
+                      <div className="w-12 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                        <div
+                          className={`h-full ${
+                            patAcc >= 85
+                              ? 'bg-emerald-400'
+                              : patAcc >= 70
+                              ? 'bg-amber-400'
+                              : 'bg-rose-400'
+                          }`}
+                          style={{ width: `${patAcc}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800 text-center">
+            <p className="text-xs text-slate-300">
+              💡 <span className="font-semibold text-white">Start your first quest!</span> Spell words in Adventure or Play modes to see your live accuracy & phonics percentages here.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Compact Daily Mission Card (Requirement 16) */}

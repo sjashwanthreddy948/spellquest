@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Flame, Coins, ArrowLeft, Heart, Shield, LogIn, Sliders } from 'lucide-react';
@@ -18,9 +18,26 @@ export const MobileTopHeader: React.FC = () => {
   const isAssessment = pathname.startsWith('/assessment');
   const isAuthScreen = pathname === '/login' || pathname === '/register';
 
-  // Dynamic greeting based on hours
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  // Dynamic greeting synchronized with phone's local time
+  const [greeting, setGreeting] = useState<string>('Welcome');
+
+  useEffect(() => {
+    const updateGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour >= 4 && hour < 12) {
+        setGreeting('Good morning');
+      } else if (hour >= 12 && hour < 17) {
+        setGreeting('Good afternoon');
+      } else if (hour >= 17 && hour < 21) {
+        setGreeting('Good evening');
+      } else {
+        setGreeting('Good night');
+      }
+    };
+    updateGreeting();
+    const interval = setInterval(updateGreeting, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (isAuthScreen) {
     return (

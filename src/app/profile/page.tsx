@@ -8,14 +8,10 @@ import {
   Flame,
   Sparkles,
   Trophy,
-  Shield,
   LogOut,
-  Settings,
-  Lock,
-  ArrowRight,
   TrendingUp,
-  Volume2,
-  Sliders,
+  Target,
+  CheckCircle2,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game/gameStore';
 import {
@@ -29,14 +25,11 @@ import { VoiceSelectorModal } from '@/components/VoiceSelectorModal';
 
 export default function MobileProfilePage() {
   const router = useRouter();
-  const { state, logout, setRole } = useGameStore();
+  const { state, logout } = useGameStore();
 
-  const [showPinModal, setShowPinModal] = useState(false);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [voiceName, setVoiceName] = useState<string>('Clear Female Voice');
   const [isFemale, setIsFemale] = useState<boolean>(true);
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState(false);
 
   useEffect(() => {
     const updateVoice = () => {
@@ -61,19 +54,7 @@ export default function MobileProfilePage() {
   const correctCount = state.attempts.filter((a) => a.isCorrect).length;
   const accuracy =
     state.attempts.length > 0 ? Math.round((correctCount / state.attempts.length) * 100) : 0;
-
-  const handleParentUnlock = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pinInput === state.parentPin) {
-      setRole('parent');
-      setShowPinModal(false);
-      setPinInput('');
-      setPinError(false);
-      router.push('/parent-dashboard');
-    } else {
-      setPinError(true);
-    }
-  };
+  const masteredWordsCount = state.srsQueue.filter((i) => i.status === 'mastered').length;
 
   const handleLogout = async () => {
     playClickSound();
@@ -197,21 +178,37 @@ export default function MobileProfilePage() {
         </button>
       </div>
 
-      {/* Educator / Parent Portal Unlock Button */}
-      <div className="p-4 rounded-3xl bg-indigo-950/60 border-2 border-indigo-500/40 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Shield className="w-5 h-5 text-indigo-400" />
-          <div>
-            <h4 className="text-xs font-bold text-white">Parent & Teacher Portal</h4>
-            <p className="text-[11px] text-slate-200 font-medium">PIN-protected academic reports</p>
+      {/* Student Academic Performance Summary */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-lg space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs sm:text-sm font-black text-white">Academic Performance & Accuracy</h3>
+          </div>
+          <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg">
+            {accuracy}% Accuracy
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 text-center pt-1">
+          <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-slate-800">
+            <span className="text-[10px] uppercase font-bold text-slate-400 block">Practiced</span>
+            <span className="text-base sm:text-lg font-black text-white mt-0.5 block">{state.attempts.length}</span>
+            <span className="text-[9px] text-slate-400 block">attempts</span>
+          </div>
+
+          <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-emerald-500/30">
+            <span className="text-[10px] uppercase font-bold text-emerald-400 block">Correct</span>
+            <span className="text-base sm:text-lg font-black text-emerald-400 mt-0.5 block">{correctCount}</span>
+            <span className="text-[9px] text-emerald-400/80 block">spelled right</span>
+          </div>
+
+          <div className="p-2.5 rounded-2xl bg-slate-950/80 border border-amber-500/30">
+            <span className="text-[10px] uppercase font-bold text-amber-400 block">Mastered</span>
+            <span className="text-base sm:text-lg font-black text-amber-300 mt-0.5 block">{masteredWordsCount}</span>
+            <span className="text-[9px] text-amber-400/80 block">words</span>
           </div>
         </div>
-        <button
-          onClick={() => setShowPinModal(true)}
-          className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-black text-white shadow active:scale-95 transition cursor-pointer"
-        >
-          Open Portal
-        </button>
       </div>
 
       {/* Auth Actions */}
@@ -230,59 +227,6 @@ export default function MobileProfilePage() {
           <span>Log Out</span>
         </button>
       </div>
-
-      {/* Parent PIN Modal Sheet */}
-      {showPinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-xs rounded-3xl bg-slate-900 border border-indigo-500/30 p-5 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg">
-                🔒
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-white">Security PIN</h3>
-                <p className="text-[11px] text-slate-400">Default PIN: 1234</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleParentUnlock} className="space-y-3">
-              <input
-                type="password"
-                maxLength={4}
-                value={pinInput}
-                onChange={(e) => {
-                  setPinInput(e.target.value);
-                  setPinError(false);
-                }}
-                placeholder="••••"
-                autoFocus
-                className="w-full min-h-[50px] text-center tracking-[0.4em] text-2xl font-bold py-2 rounded-xl bg-slate-950 border border-indigo-500/30 text-amber-300 focus:outline-none"
-              />
-              {pinError && (
-                <p className="text-[11px] text-rose-400 text-center font-bold">
-                  Incorrect PIN. Try 1234.
-                </p>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPinModal(false)}
-                  className="flex-1 min-h-[44px] py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 min-h-[44px] py-2 rounded-xl bg-indigo-600 text-white text-xs font-black shadow"
-                >
-                  Unlock
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Voice Selection & Pronunciation Modal */}
       <VoiceSelectorModal

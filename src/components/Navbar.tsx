@@ -1,42 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { Sparkles, Flame, Coins, Shield, User, Compass, Trophy, ShoppingBag, LayoutDashboard } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Sparkles, Flame, Coins, Compass, Trophy, ShoppingBag, LayoutDashboard } from 'lucide-react';
 import { useGameStore } from '@/lib/game/gameStore';
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
-  const router = useRouter();
-  const { state, setRole } = useGameStore();
-  const [showPinModal, setShowPinModal] = useState(false);
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState(false);
-
-  const isParentView = pathname.startsWith('/parent-dashboard');
-
-  const handleParentClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (state.userRole === 'parent') {
-      router.push('/parent-dashboard');
-    } else {
-      setShowPinModal(true);
-    }
-  };
-
-  const verifyPin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pinInput === state.parentPin) {
-      setRole('parent');
-      setShowPinModal(false);
-      setPinInput('');
-      setPinError(false);
-      router.push('/parent-dashboard');
-    } else {
-      setPinError(true);
-    }
-  };
+  const { state } = useGameStore();
 
   const navLinks = [
     { href: '/adventure', label: 'Adventure', icon: Compass },
@@ -110,29 +82,6 @@ export const Navbar: React.FC = () => {
               <span>{state.profile.xp.toLocaleString()} XP</span>
             </div>
 
-            {/* Role Switcher */}
-            {isParentView ? (
-              <button
-                onClick={() => {
-                  setRole('student');
-                  router.push('/dashboard');
-                }}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Student View</span>
-              </button>
-            ) : (
-              <button
-                onClick={handleParentClick}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition shadow-sm"
-                title="Teacher / Parent Analytics"
-              >
-                <Shield className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="hidden sm:inline">Parent/Teacher</span>
-              </button>
-            )}
-
             {/* Avatar Profile */}
             <Link
               href="/dashboard"
@@ -167,59 +116,6 @@ export const Navbar: React.FC = () => {
           })}
         </div>
       </header>
-
-      {/* Parent PIN Modal */}
-      {showPinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-indigo-500/30 p-6 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl">
-                🔒
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">Parent & Teacher Portal</h3>
-                <p className="text-xs text-slate-200">Enter security PIN (Default: 1234)</p>
-              </div>
-            </div>
-
-            <form onSubmit={verifyPin} className="space-y-4">
-              <div>
-                <input
-                  type="password"
-                  maxLength={6}
-                  value={pinInput}
-                  onChange={(e) => {
-                    setPinInput(e.target.value);
-                    setPinError(false);
-                  }}
-                  placeholder="Enter 4-digit PIN..."
-                  autoFocus
-                  className="w-full text-center tracking-[0.4em] text-2xl font-bold py-3 px-4 rounded-xl bg-slate-950 border border-indigo-500/30 text-amber-300 focus:outline-none focus:border-amber-400"
-                />
-                {pinError && (
-                  <p className="text-xs text-rose-400 mt-2 text-center">Incorrect PIN. Try default: 1234</p>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPinModal(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-semibold hover:bg-slate-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold shadow-md shadow-indigo-600/30"
-                >
-                  Unlock Portal
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </>
   );
 };

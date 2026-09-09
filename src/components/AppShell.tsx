@@ -22,6 +22,15 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   const isAuthPage = pathname === '/login' || pathname === '/register';
   const isPlayScreen = pathname.startsWith('/play') || pathname.startsWith('/assessment');
+  const isAdminPage = pathname.startsWith('/admin');
+
+  if (isAdminPage) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-amber-400 selection:text-slate-950">
+        <main className="flex-1 w-full">{children}</main>
+      </div>
+    );
+  }
 
   if (isPublicPage) {
     return (
