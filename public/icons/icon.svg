@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="50%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="bookGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- App Icon Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect x="8" y="8" width="496" height="496" rx="104" fill="none" stroke="#6366f1" stroke-width="6" stroke-opacity="0.4"/>
+  
+  <!-- Open Magic Book Base -->
+  <path d="M256 380 C200 340 140 330 90 340 L90 190 C140 180 200 190 256 230 C312 190 372 180 422 190 L422 340 C372 330 312 340 256 380 Z" fill="url(#bookGrad)" stroke="#a5b4fc" stroke-width="8"/>
+  <path d="M256 230 L256 380" stroke="#c7d2fe" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Glowing Star on Top -->
+  <polygon points="256,70 278,135 348,135 292,176 313,241 256,200 199,241 220,176 164,135 234,135" fill="url(#starGrad)" stroke="#fbbf24" stroke-width="4"/>
+  
+  <!-- Sparkles -->
+  <circle cx="150" cy="110" r="10" fill="#fde047"/>
+  <circle cx="370" cy="120" r="8" fill="#fde047"/>
+  <circle cx="390" cy="270" r="12" fill="#38bdf8"/>
+  <circle cx="120" cy="260" r="8" fill="#38bdf8"/>
+</svg>
