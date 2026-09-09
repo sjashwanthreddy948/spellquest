@@ -112,7 +112,7 @@ export default function MobileRegisterPage() {
     playLevelUpSound();
     try {
       await register(name, contact, selectedLevel, selectedCompanion, selectedAvatar);
-      router.push('/dashboard');
+      router.push('/assessment');
     } finally {
       setIsLoading(false);
     }

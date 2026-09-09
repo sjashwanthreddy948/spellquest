@@ -10,12 +10,13 @@ import {
   StudentProfile,
   WordAttempt,
 } from '@/types';
-import { GAME_WORLDS } from '@/data/worlds';
-import { INITIAL_ACHIEVEMENTS, INITIAL_DAILY_MISSIONS } from '@/data/achievements';
+import { getFreshWorlds } from '@/data/worlds';
+import { getFreshAchievements, getFreshDailyMissions } from '@/data/achievements';
 import { recordSRSAttempt } from '@/lib/spelling/srs';
 import { getSupabase } from '@/lib/supabase/client';
 
-const STORAGE_KEY = 'spellquest_game_state_v2';
+const STORAGE_KEY = 'spellquest_game_state_v3';
+const USERS_REGISTRY_KEY = 'spellquest_user_accounts_v3';
 
 export interface AuthUser {
   contact?: string;
@@ -43,89 +44,66 @@ export interface GameState {
   justUnlockedStage: UnlockedStageNotification | null;
 }
 
-// Initial default profile representing our 5th-grade learner
-const DEFAULT_PROFILE: StudentProfile = {
-  id: 'student-maya-01',
-  name: 'Maya',
-  grade: 'Grade 5',
-  level: 3,
-  xp: 12450,
-  coins: 480,
-  streakDays: 8,
+// Clean Guest profile for unauthenticated visitors
+export const GUEST_PROFILE: StudentProfile = {
+  id: 'guest',
+  name: 'Guest Speller',
+  grade: 'Grade 3',
+  level: 1,
+  xp: 0,
+  coins: 0,
+  streakDays: 0,
   lastActiveDate: new Date().toISOString(),
-  completedAssessment: true,
+  completedAssessment: false,
   activeWorldId: 'world-1',
-  currentStage: 2,
+  currentStage: 1,
   hearts: 3,
   maxHearts: 3,
   avatar: '🧙‍♀️',
-  title: 'Word Explorer',
+  title: 'Apprentice Speller',
   companion: 'Sparky the Dragon 🐲',
   unlockedAvatars: ['🧙‍♀️', '🦊', '🚀', '🐱', '🤖'],
-  unlockedTitles: ['Word Explorer', 'Spelling Knight', 'Pattern Seeker'],
-  unlockedCompanions: ['Sparky the Dragon 🐲', 'Barnaby the Owl 🦉'],
+  unlockedTitles: ['Apprentice Speller'],
+  unlockedCompanions: ['Sparky the Dragon 🐲'],
 };
-
-// Seed 30-day attempt history to populate reports & graphs realistically
-function generateSeedAttempts(): WordAttempt[] {
-  const attempts: WordAttempt[] = [];
-  const wordsList = ['beautiful', 'necessary', 'environment', 'running', 'school', 'friend', 'together', 'important'];
-  const now = Date.now();
-
-  for (let day = 14; day >= 0; day--) {
-    const dayTimestamp = now - day * 86400000;
-    const attemptsCount = 4 + Math.floor(Math.random() * 5);
-
-    for (let i = 0; i < attemptsCount; i++) {
-      const isPast = day > 7;
-      const isCorrect = Math.random() < (isPast ? 0.62 : 0.83);
-      const word = wordsList[Math.floor(Math.random() * wordsList.length)];
-
-      attempts.push({
-        id: `att-seed-${day}-${i}`,
-        studentId: 'student-maya-01',
-        wordId: `w-${word}`,
-        word,
-        submittedAnswer: isCorrect ? word : word.slice(0, -1),
-        isCorrect,
-        attemptNumber: isCorrect ? 1 : 2,
-        responseTimeMs: 2200 + Math.floor(Math.random() * 1500),
-        hintUsed: false,
-        mistakeType: isCorrect ? undefined : 'double_letter',
-        timestamp: new Date(dayTimestamp + i * 300000).toISOString(),
-        gameMode: 'spell_it',
-      });
-    }
-  }
-
-  return attempts;
-}
-
-const SEED_SRS_QUEUE: SRSItem[] = [
-  { wordId: 'w-l3-001', word: 'beautiful', intervalDays: 7, easeFactor: 2.6, repetitions: 4, nextReviewDate: new Date(Date.now() + 5 * 86400000).toISOString(), lastReviewedDate: new Date().toISOString(), status: 'mastered', consecutiveCorrect: 4 },
-  { wordId: 'w-l2-001', word: 'school', intervalDays: 14, easeFactor: 2.7, repetitions: 5, nextReviewDate: new Date(Date.now() + 10 * 86400000).toISOString(), lastReviewedDate: new Date().toISOString(), status: 'mastered', consecutiveCorrect: 5 },
-  { wordId: 'w-l2-007', word: 'careful', intervalDays: 3, easeFactor: 2.4, repetitions: 3, nextReviewDate: new Date(Date.now() + 2 * 86400000).toISOString(), lastReviewedDate: new Date().toISOString(), status: 'reviewing', consecutiveCorrect: 2 },
-  { wordId: 'w-l4-001', word: 'necessary', intervalDays: 1, easeFactor: 2.2, repetitions: 1, nextReviewDate: new Date(Date.now() - 3600000).toISOString(), lastReviewedDate: new Date().toISOString(), status: 'learning', consecutiveCorrect: 0 },
-  { wordId: 'w-l4-002', word: 'environment', intervalDays: 0, easeFactor: 2.1, repetitions: 0, nextReviewDate: new Date().toISOString(), lastReviewedDate: new Date().toISOString(), status: 'learning', consecutiveCorrect: 0 },
-  { wordId: 'w-l3-003', word: 'different', intervalDays: 7, easeFactor: 2.5, repetitions: 4, nextReviewDate: new Date(Date.now() + 4 * 86400000).toISOString(), lastReviewedDate: new Date().toISOString(), status: 'mastered', consecutiveCorrect: 4 },
-];
 
 export const INITIAL_GAME_STATE: GameState = {
   currentUser: {
-    email: 'maya@spellquest.app',
-    name: 'Maya',
-    isLoggedIn: true,
+    name: 'Guest',
+    isLoggedIn: false,
   },
-  profile: DEFAULT_PROFILE,
-  worlds: GAME_WORLDS,
-  srsQueue: SEED_SRS_QUEUE,
-  attempts: generateSeedAttempts(),
-  dailyMissions: INITIAL_DAILY_MISSIONS,
-  achievements: INITIAL_ACHIEVEMENTS,
+  profile: GUEST_PROFILE,
+  worlds: getFreshWorlds(),
+  srsQueue: [],
+  attempts: [],
+  dailyMissions: getFreshDailyMissions(),
+  achievements: getFreshAchievements(),
   userRole: 'student',
   parentPin: '1234',
   justUnlockedStage: null,
 };
+
+function getUserRegistry(): Record<string, GameState> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(USERS_REGISTRY_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveUserToRegistry(contactOrKey: string, userState: GameState) {
+  if (typeof window === 'undefined' || !contactOrKey) return;
+  try {
+    const registry = getUserRegistry();
+    const key = contactOrKey.toLowerCase().trim();
+    registry[key] = userState;
+    localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(registry));
+  } catch (e) {
+    console.warn('Failed to save to user registry', e);
+  }
+}
 
 export function useGameStore() {
   const [state, setState] = useState<GameState>(INITIAL_GAME_STATE);
@@ -133,10 +111,26 @@ export function useGameStore() {
 
   useEffect(() => {
     try {
+      // Clear legacy storage keys and mock accounts
+      if (localStorage.getItem('spellquest_game_state_v2')) {
+        localStorage.removeItem('spellquest_game_state_v2');
+      }
+      if (localStorage.getItem('spellquest_game_state')) {
+        localStorage.removeItem('spellquest_game_state');
+      }
+
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        setState(parsed);
+        // Avoid leaking any legacy mock student
+        if (parsed.profile?.id === 'student-maya-01' || parsed.currentUser?.email === 'maya@spellquest.app') {
+          localStorage.removeItem(STORAGE_KEY);
+          setState(INITIAL_GAME_STATE);
+        } else {
+          setState(parsed);
+        }
+      } else {
+        setState(INITIAL_GAME_STATE);
       }
     } catch (e) {
       console.warn('Could not read game state from localStorage', e);
@@ -148,6 +142,10 @@ export function useGameStore() {
     setState(nextState);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+      const key = nextState.currentUser?.contact || nextState.currentUser?.email;
+      if (nextState.currentUser?.isLoggedIn && key) {
+        saveUserToRegistry(key, nextState);
+      }
     } catch (e) {
       console.warn('Could not write game state to localStorage', e);
     }
@@ -155,21 +153,57 @@ export function useGameStore() {
 
   const login = async (name: string, contact: string) => {
     const resolvedName = name.trim() || 'Young Adventurer';
-    const resolvedContact = contact.trim();
-    const nextState: GameState = {
-      ...state,
-      currentUser: {
-        contact: resolvedContact,
-        email: resolvedContact.includes('@') ? resolvedContact : undefined,
-        name: resolvedName,
-        isLoggedIn: true,
-      },
-      profile: {
-        ...state.profile,
-        name: resolvedName,
-        contact: resolvedContact,
-      },
-    };
+    const normalizedContact = contact.trim().toLowerCase();
+    const registry = getUserRegistry();
+
+    let nextState: GameState;
+    if (registry[normalizedContact]) {
+      // Restore user's exact recorded progress
+      const saved = registry[normalizedContact];
+      nextState = {
+        ...saved,
+        currentUser: {
+          ...saved.currentUser,
+          contact: contact.trim(),
+          email: contact.includes('@') ? contact.trim() : undefined,
+          name: resolvedName || saved.currentUser.name,
+          isLoggedIn: true,
+        },
+        profile: {
+          ...saved.profile,
+          name: resolvedName || saved.profile.name,
+          contact: contact.trim(),
+        },
+      };
+    } else {
+      // New login for this contact - create fresh profile
+      nextState = {
+        ...INITIAL_GAME_STATE,
+        currentUser: {
+          contact: contact.trim(),
+          email: contact.includes('@') ? contact.trim() : undefined,
+          name: resolvedName,
+          isLoggedIn: true,
+        },
+        profile: {
+          ...GUEST_PROFILE,
+          id: `student-${Date.now()}`,
+          name: resolvedName,
+          contact: contact.trim(),
+          level: 1,
+          xp: 0,
+          coins: 50,
+          streakDays: 1,
+          currentStage: 1,
+        },
+        worlds: getFreshWorlds(),
+        attempts: [],
+        srsQueue: [],
+        dailyMissions: getFreshDailyMissions(),
+        achievements: getFreshAchievements(),
+      };
+    }
+
     persist(nextState);
     return true;
   };
@@ -177,12 +211,12 @@ export function useGameStore() {
   const register = async (
     name: string,
     contact: string,
-    spellingLevel: number = 3,
+    spellingLevel: number = 1,
     companionId: string = 'sparky',
     avatar: string = '🧙‍♀️'
   ) => {
     const resolvedName = name.trim() || 'Young Adventurer';
-    const resolvedContact = contact.trim();
+    const normalizedContact = contact.trim().toLowerCase();
     const gradeNumber = Math.min(6, Math.max(3, spellingLevel + 2));
     const gradeString = `Grade ${gradeNumber}`;
 
@@ -201,26 +235,38 @@ export function useGameStore() {
     };
 
     const nextState: GameState = {
-      ...state,
+      ...INITIAL_GAME_STATE,
       currentUser: {
-        contact: resolvedContact,
-        email: resolvedContact.includes('@') ? resolvedContact : undefined,
+        contact: contact.trim(),
+        email: contact.includes('@') ? contact.trim() : undefined,
         name: resolvedName,
         isLoggedIn: true,
       },
       profile: {
-        ...state.profile,
+        ...GUEST_PROFILE,
+        id: `student-${Date.now()}`,
         name: resolvedName,
-        contact: resolvedContact,
+        contact: contact.trim(),
         grade: gradeString,
         level: spellingLevel,
         spellingLevel,
-        title: titlesByLevel[spellingLevel] || 'Spelling Champion',
-        companion: companionNames[companionId] || state.profile.companion,
+        title: titlesByLevel[spellingLevel] || 'Apprentice Speller',
+        companion: companionNames[companionId] || 'Sparky the Dragon 🐲',
         companionId,
         avatar,
+        xp: 0,
+        coins: 50,
+        streakDays: 1,
+        currentStage: 1,
+        completedAssessment: false,
       },
+      worlds: getFreshWorlds(),
+      attempts: [],
+      srsQueue: [],
+      dailyMissions: getFreshDailyMissions(),
+      achievements: getFreshAchievements(),
     };
+
     persist(nextState);
     return true;
   };
@@ -234,11 +280,20 @@ export function useGameStore() {
         console.warn('Supabase sign out error:', err);
       }
     }
-    const nextState: GameState = {
-      ...state,
-      currentUser: { email: '', name: 'Guest', isLoggedIn: false },
+    const key = state.currentUser?.contact || state.currentUser?.email;
+    if (key) {
+      saveUserToRegistry(key, state);
+    }
+    // Revert to clean guest
+    const guestState: GameState = {
+      ...INITIAL_GAME_STATE,
+      worlds: getFreshWorlds(),
+      attempts: [],
+      srsQueue: [],
+      dailyMissions: getFreshDailyMissions(),
+      achievements: getFreshAchievements(),
     };
-    persist(nextState);
+    persist(guestState);
   };
 
   const recordAttempt = (
@@ -251,6 +306,10 @@ export function useGameStore() {
     attemptNumber: number = 1,
     cluesCount: number = 0
   ) => {
+    // Only record attempts and learning stats after student has logged in
+    if (!state.currentUser?.isLoggedIn) {
+      return { xpBonus: 0, coinBonus: 0, isNowMastered: false };
+    }
     const cluesUsed = cluesCount > 0 ? cluesCount : (hintUsed ? 1 : 0);
     const newAttempt: WordAttempt = {
       id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,

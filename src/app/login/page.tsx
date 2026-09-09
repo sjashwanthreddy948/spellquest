@@ -12,8 +12,10 @@ export default function MobileLoginPage() {
   const router = useRouter();
   const { login, state } = useGameStore();
 
-  const [name, setName] = useState(state.profile?.name || '');
-  const [contact, setContact] = useState(state.profile?.contact || '');
+  const [name, setName] = useState(state.currentUser?.isLoggedIn ? state.profile?.name : '');
+  const [contact, setContact] = useState(
+    state.currentUser?.isLoggedIn ? (state.profile?.contact || state.currentUser?.contact || '') : ''
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -42,7 +44,7 @@ export default function MobileLoginPage() {
     setIsLoading(true);
     playCorrectSound();
     try {
-      await login('Maya', '9876543210');
+      await login('Alex Speller', 'demo@spellquest.app');
       router.push('/dashboard');
     } finally {
       setIsLoading(false);

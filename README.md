@@ -1,107 +1,211 @@
-# SpellQuest AI 🚀
+# SpellQuest
 
 > **Listen. Spell. Learn. Master.**  
-> A mobile-first, app-like adaptive spelling adventure game designed for 5th-grade students to achieve measurable spelling mastery within 30 days.
+> An interactive spelling adventure designed to help children build spelling confidence through listening, progressive levels, friendly feedback, and game-based progression.
 
 ---
 
-## 📱 Mobile-First Redesign & App Experience
+## Overview
 
-SpellQuest AI is engineered specifically for smartphones (tested across 320px, 360px, 375px, 390px, 412px, 430px) and expands seamlessly to tablets (768px, 1024px) and desktop.
+SpellQuest is a learning-focused educational platform that turns English spelling practice into an adventure. Designed for elementary and middle school students, the application balances multi-sensory auditory phonics, structured vocabulary progression, constructive error diffing, and spaced repetition memory scheduling.
 
-### What Makes It Feel Like a Native App:
-1. **Full-Screen Mobile App Shell**:
-   - **Compact Context-Aware Header**: Greeting & streak on hub tabs; back arrow & stage details on game screens.
-   - **Fixed Bottom Navigation Bar**: 5 primary tabs with 48px+ touch targets:
-     - 🏠 **Home** (`/dashboard`): Continue adventure card, daily missions, and 30-day Tree of Life visualizer.
-     - 🗺️ **Adventure** (`/adventure`): Vertical winding path from Stage 1 → 2 → 3 → 4 → 5 → 👑 Boss.
-     - 🎯 **Practice** (`/play`): Touch-first spelling game supporting all 7 game modes.
-     - 🏆 **Rewards** (`/achievements`): 2-column mobile badge grid and trophy hall.
-     - 👤 **Profile** (`/profile`): Dedicated profile card, accuracy stats, companion manager, and PIN-protected parent portal access.
-2. **Touch-First Mobile Spelling Game**:
-   - Prominent **[ 🔊 PLAY WORD ]** button (resolves mobile browser autoplay restrictions).
-   - 56px height, 20px font touch input that stays visible above the mobile keyboard.
-   - 52px height child-friendly **[ CHECK ANSWER ]** button.
-   - Stage progress indicator (`Stage 2`, `Word 4 / 10`, `⭐ 650 XP`, `🔥 6 Streak`, `❤️ ❤️ ❤️`).
-   - Mobile Result Screen after each 10-word challenge with score, XP bonus, and streak animation.
-3. **Stage Unlock Celebration**:
-   - When a stage is completed, an animated mobile celebration modal pops up:  
-     `🎉 NEW STAGE UNLOCKED! 🌳 Stage 2. Your adventure continues! [ LET'S GO! ]`
-4. **Zero Horizontal Overflow Guarantee**:
-   - Enforced `max-width: 100vw` and `overflow-x: hidden` across all screens down to 320px width.
-5. **PWA (Progressive Web App)**:
-   - Web App Manifest (`public/manifest.json`).
-   - Mobile viewport configuration with safe-area insets (`viewport-fit=cover`).
-   - Standalone display mode with custom theme color (`#0f172a`).
-   - Friendly non-intrusive install prompt banner (`PWAInstallBanner`).
+The experience is crafted mobile-first to feel like a native educational game on smartphones and tablets, while expanding into an intuitive desktop learning experience.
 
 ---
 
-## 🎮 The Core Learning Loop
+## Features
 
-`LISTEN → THINK → TYPE → CHECK → LEARN → REPEAT → MASTER`
-
-- **Deterministic Spelling Engine**: Damerau-Levenshtein alignment highlighting only the exact character slip (e.g. `beautifull` vs `beautiful`).
-- **Pedagogical Feedback**: 100% positive, encouraging tone with zero harsh shaming.
-- **AI Learning Coach**: Memory tricks (e.g. *"1 Collar & 2 Sleeves = ne-C-e-SS-ary"*) and targeted 3-word practice sets.
-- **Adaptive Difficulty Engine**: 60% new target words, 20% spaced repetition queue, 15% reinforcement, 5% surprise challenge.
-- **Anti-Frustration Safeguard**: Automatically reduces difficulty and provides warm-ups after consecutive errors.
-- **Spaced Repetition System (SRS)**: Multi-day intervals (same session → 4 hours → 1 day → 3 days → 7 days).
+- **🎮 Adventure-Based Progression**: Complete stages across diverse worlds (Word Garden, Spelling Forest, Grammar Kingdom, Challenge Mountain, Word Galaxy).
+- **🔊 Listen & Spell**: High-fidelity speech synthesis with pace adjustment (0.7x to 1.1x) and multi-accent options (US, UK, AUS, Indian English).
+- **🌱 Friendly Error Diagnostics**: Character-level diff highlights show exact slips (e.g. single vs double consonants, tricky vowels) with positive feedback.
+- **🧠 Spaced Repetition System (SRS)**: Adaptive review queue re-tests previously challenging words at expanding intervals until permanent mastery.
+- **🎯 Daily Missions & Streaks**: Encourages manageable daily practice sessions (10–15 words per day) without fatigue.
+- **🏆 Rewards & Mascots**: Earn adventure coins and XP to unlock fantasy companions (Sparky the Dragon, Pip the Owl, Luna the Fox) and speller titles.
+- **📊 Parent & Educator Portal**: PIN-protected analytics displaying authentic attempt history, accuracy trends, and words in review.
+- **🔒 Child-Safe & Privacy-First**: Passwordless account restoration, no photos, no public feeds, and minimal personal data collection.
 
 ---
 
-## 🛠️ Tech Stack
+## Learning System
 
-- **Framework**: Next.js 14+ (App Router, React 19, TypeScript)
-- **Styling**: Tailwind CSS (Mobile-First responsive system)
+SpellQuest follows a proven pedagogical cycle:
+
+```text
+LISTEN 🔊 ──> TYPE ✏️ ──> LEARN 🌱 ──> LEVEL UP ⭐
+```
+
+1. **Multi-Sensory Auditory Input**: Words are spoken aloud with accompanying contextual sentences and syllable breakdowns.
+2. **Deterministic Mistake Alignment**: Uses modified Damerau-Levenshtein distance algorithms to pinpoint exact transposition, omission, or duplication errors.
+3. **Mnemonic Coaching**: Helpful memory hooks (e.g. *"1 Collar & 2 Sleeves = ne-C-e-SS-ary"* or *"-ful only has one L"*) clarify tricky rules.
+4. **Adaptive Practice Engine**: Balances 60% new curriculum vocabulary, 25% spaced repetition review, and 15% consolidation challenges.
+5. **Anti-Frustration Safeguards**: Clue systems and automatic difficulty scaling keep children motivated through tough words.
+
+---
+
+## Game System
+
+### Worlds & Stages
+- **🌱 World 1: Word Garden** (Foundation CVC words, short vowels, and consonant blends)
+- **🌳 World 2: Spelling Forest** (Silent letters, doubled consonants, and common suffixes)
+- **🏰 World 3: Grammar Kingdom** (Prefixes, vowel combinations, and academic vocabulary)
+- **🌋 World 4: Challenge Mountain** (Multi-syllable traps, irregular spellings)
+- **🌌 World 5: Word Galaxy** (Latin & Greek roots, advanced phonetics)
+
+### Game Modes
+- **Spell It**: Core listening adventure mode with progressive clues.
+- **Word Scramble**: Unscramble mixed-up letter tiles to form words.
+- **Missing Letters**: Fill in the blank letter slots with visual cues.
+- **Find the Mistake**: Proofreading challenge identifying misspelled letters.
+- **Memory Challenge**: Memorize syllables before the letters disappear.
+- **Speed Spell**: Fast-paced 30-second reflex spelling drill.
+- **Boss Battle**: High-stakes stage review testing chapter mastery.
+
+---
+
+## Technology Stack
+
+- **Framework**: Next.js 16 (App Router, Server & Client Components)
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS (Dark Fantasy Educational Theme, responsive down to 320px)
 - **Icons**: Lucide React
-- **Celebrations**: Canvas Confetti
 - **Audio**: Web Speech Synthesis API & Web Audio API (procedural SFX synthesizer)
-- **Database**: Supabase PostgreSQL + hybrid offline-first LocalStorage persistence
-- **PWA**: Web App Manifest & Service Worker / Standalone App Shell
+- **Celebrations**: Canvas Confetti
+- **State & Storage**: Offline-First Local Registry + Optional Supabase PostgreSQL Sync
 
 ---
 
-## 🚀 Getting Started
+## Authentication
 
-### Local Development
-
-1. Clone and install dependencies:
-   ```bash
-   cd spellinglearning
-   npm install
-   ```
-
-2. Start the development server (configured to port 3005):
-   ```bash
-   npm run dev
-   ```
-
-3. Open **`http://localhost:3005`** in your browser (or use your phone's browser connected to the local network).
+SpellQuest provides a child-friendly, passwordless registration and login system:
+- **Registration**: Student chooses display name, parent contact (email or phone), starting level, companion, and avatar.
+- **Session Persistence**: Progress, stage unlocks, XP, coins, and attempts are stored securely per account.
+- **Multi-Account Registry**: Seamlessly switches between registered students on the same family device.
+- **Guest Exploration**: Visitors can explore the public landing page, How It Works, and preview challenges without creating an account.
 
 ---
 
-## 🔐 Authentication & Session Persistence
+## Database
 
-- **Login Screen**: `/login` (Supports instant one-tap login as demo student **Maya**).
-- **Register Screen**: `/register` (Name, Email, Password).
-- **Profile Screen**: `/profile` (Session details, settings, and PIN-protected parent portal access).
-- Sessions persist seamlessly across page refreshes and browser restarts.
-
----
-
-## 📊 Parent & Educator Dashboard
-
-- Access via the **Profile** tab or `/parent-dashboard` with PIN **`1234`**.
-- Features 30-second executive summary cards, 10-day milestone progress curves, pattern proficiency breakdown, revision queue, and print/export report card functionality.
+SpellQuest supports hybrid persistence:
+1. **Offline-First Mode**: Stores student accounts, stage progression, daily missions, and SRS review items locally via browser storage.
+2. **Cloud PostgreSQL (Supabase)**: When environment variables are provided, progress automatically synchronizes with Supabase with Row Level Security (RLS).
 
 ---
 
-## 🚢 Deployment to Vercel
+## Local Development
 
-1. Push your repository to GitHub.
-2. Import the project into your Vercel Dashboard.
-3. Build command: `npm run build`
-4. Output directory: `.next`
-5. (Optional) Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `GEMINI_API_KEY` in Environment Variables.
-6. Deploy!
+### Prerequisites
+- Node.js 18.17+ or 20+
+- npm or pnpm
+
+### Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/sjashwanthreddy948/spellquest.git
+cd spellquest
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```env
+# Optional: Supabase PostgreSQL connection
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+DATABASE_URL=postgresql://postgres:password@db.your-project.supabase.co:5432/postgres
+
+# Optional: Google Gemini API Key for dynamic coaching hints
+GEMINI_API_KEY=
+```
+
+*(Note: If environment variables are omitted, SpellQuest runs in offline-first mode with built-in pedagogical heuristics).*
+
+---
+
+## Supabase Setup
+
+To initialize Supabase tables and Row Level Security:
+1. Create a new project on [Supabase](https://supabase.com).
+2. Navigate to the **SQL Editor**.
+3. Run the SQL statements located in `supabase/schema.sql`.
+4. Copy your project URL and anon public key into `.env.local`.
+
+---
+
+## PWA (Progressive Web App)
+
+SpellQuest is configured as an installable Progressive Web App:
+- Web App Manifest: `public/manifest.json`
+- Mobile Viewport: `viewport-fit=cover` with safe-area padding
+- Custom Icon: `public/icon.svg`
+- Non-intrusive install banner for mobile Safari and Chrome
+
+---
+
+## Deployment
+
+### Vercel Deployment
+
+1. Push your code to GitHub.
+2. Import the repository into [Vercel](https://vercel.com/new).
+3. Under **Build & Development Settings**, keep defaults:
+   - Framework Preset: **Next.js**
+   - Build Command: `next build`
+   - Output Directory: `.next`
+4. Add any optional environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+5. Click **Deploy**.
+
+---
+
+## Project Structure
+
+```text
+spellquest/
+├── public/                     # Static assets (images, icons, manifest)
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── (public)/           # Landing, About, How It Works, Contact, Privacy, Terms
+│   │   ├── (auth)/             # Login, Register
+│   │   ├── (student)/          # Dashboard, Adventure, Play, Achievements, Shop, Profile
+│   │   ├── (parent)/           # Parent/Teacher Dashboard
+│   │   ├── icon.svg            # Brand Vector Favicon
+│   │   ├── not-found.tsx       # Custom 404
+│   │   ├── error.tsx           # Global Error Boundary
+│   │   ├── loading.tsx         # Loading State
+│   │   └── layout.tsx          # Root Layout with AppShell & SEO
+│   ├── components/             # Reusable UI & Game components
+│   │   ├── AppShell.tsx        # Public vs App shell router
+│   │   ├── PublicNavbar.tsx    # Desktop & mobile public header
+│   │   ├── Footer.tsx          # Complete desktop & mobile footer
+│   │   ├── modes/              # 7 Spelling game modes
+│   │   └── mobile/             # Mobile navigation & modals
+│   ├── data/                   # Vocabulary lists, worlds, achievements
+│   ├── lib/
+│   │   ├── game/               # gameStore.ts (state & accounts)
+│   │   ├── spelling/           # diff, audio, srs, adaptive logic
+│   │   └── supabase/           # Supabase client wrapper
+│   └── types/                  # TypeScript definitions
+├── supabase/
+│   └── schema.sql              # PostgreSQL schema & RLS policies
+├── README.md                   # Project documentation
+└── package.json
+```
+
+---
+
+## Developer Credit
+
+**Developed by S. Jashwanth Reddy**  
+© 2026 SpellQuest. All rights reserved.

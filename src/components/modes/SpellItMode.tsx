@@ -55,7 +55,7 @@ export const SpellItMode: React.FC<SpellItModeProps> = ({
   const [attemptCount, setAttemptCount] = useState(1);
   const [hintLevel, setHintLevel] = useState(0);
   const [deductionAlert, setDeductionAlert] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState<number>(Date.now());
+  const [startTime, setStartTime] = useState<number>(() => Date.now());
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [showVoiceModal, setShowVoiceModal] = useState(false);

@@ -15,11 +15,11 @@ export const GAME_WORLDS: GameWorld[] = [
     bossAvatar: '🗿🌱',
     bossHp: 500,
     stages: [
-      { stageNumber: 1, title: 'Seedling Steps', description: 'Warm-up with 3-letter CVC words', isBoss: false, stars: 3, unlocked: true, highScore: 300, wordsCount: 5 },
-      { stageNumber: 2, title: 'Petal Pathway', description: 'Common short vowel words', isBoss: false, stars: 2, unlocked: true, highScore: 260, wordsCount: 5 },
-      { stageNumber: 3, title: 'Bramble Creek', description: 'Consonant blends like ST, FL, BL', isBoss: false, stars: 3, unlocked: true, highScore: 300, wordsCount: 5 },
-      { stageNumber: 4, title: 'Sunlit Clearing', description: 'Double Os and Es in the garden', isBoss: false, stars: 1, unlocked: true, highScore: 220, wordsCount: 5 },
-      { stageNumber: 5, title: 'Flower Sanctuary', description: 'Complete garden mastery review', isBoss: false, stars: 0, unlocked: true, highScore: 0, wordsCount: 5 },
+      { stageNumber: 1, title: 'Seedling Steps', description: 'Warm-up with 3-letter CVC words', isBoss: false, stars: 0, unlocked: true, highScore: 0, wordsCount: 5 },
+      { stageNumber: 2, title: 'Petal Pathway', description: 'Common short vowel words', isBoss: false, stars: 0, unlocked: false, highScore: 0, wordsCount: 5 },
+      { stageNumber: 3, title: 'Bramble Creek', description: 'Consonant blends like ST, FL, BL', isBoss: false, stars: 0, unlocked: false, highScore: 0, wordsCount: 5 },
+      { stageNumber: 4, title: 'Sunlit Clearing', description: 'Double Os and Es in the garden', isBoss: false, stars: 0, unlocked: false, highScore: 0, wordsCount: 5 },
+      { stageNumber: 5, title: 'Flower Sanctuary', description: 'Complete garden mastery review', isBoss: false, stars: 0, unlocked: false, highScore: 0, wordsCount: 5 },
       { stageNumber: 6, title: 'Sproutling Golem Challenge', description: 'Defeat the Guardian of the Word Garden', isBoss: true, stars: 0, unlocked: false, highScore: 0, wordsCount: 8 },
     ],
   },
@@ -132,3 +132,7 @@ export const GAME_WORLDS: GameWorld[] = [
     ],
   },
 ];
+
+export function getFreshWorlds(): GameWorld[] {
+  return JSON.parse(JSON.stringify(GAME_WORLDS));
+}

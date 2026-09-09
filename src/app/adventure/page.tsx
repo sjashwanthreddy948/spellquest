@@ -50,6 +50,24 @@ export default function MobileAdventurePage() {
 
   return (
     <div className="w-full space-y-5 pt-3 pb-8 animate-in fade-in duration-200">
+      {/* Guest notice if not logged in */}
+      {!state.currentUser?.isLoggedIn && (
+        <div className="p-3.5 rounded-2xl bg-amber-950/60 border-2 border-amber-500/40 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs shadow-md">
+          <div className="flex items-center gap-2 text-slate-200 text-center sm:text-left">
+            <span className="text-lg">🎒</span>
+            <span className="font-semibold">
+              Exploring as Guest. Create a free account to permanently save your stage stars, XP, and companion!
+            </span>
+          </div>
+          <Link
+            href="/register"
+            className="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black shrink-0 shadow transition"
+          >
+            Create Free Account
+          </Link>
+        </div>
+      )}
+
       {/* World Switcher Dropdown / Pills */}
       <div className="space-y-1.5">
         <span className="text-[11px] font-black uppercase text-amber-400 tracking-wider">

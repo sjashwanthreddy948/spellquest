@@ -32,6 +32,18 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
   const [voiceName, setVoiceName] = useState<string>('Female Voice');
   const [isFemale, setIsFemale] = useState<boolean>(true);
 
+  const handlePlayNormal = async () => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+    setActiveType('normal');
+    try {
+      await playWord(word);
+    } finally {
+      setIsPlaying(false);
+      setActiveType(null);
+    }
+  };
+
   useEffect(() => {
     initSpeechVoices();
     const updateVoice = () => {
@@ -50,18 +62,6 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
     }
     return unsub;
   }, [word]);
-
-  const handlePlayNormal = async () => {
-    if (isPlaying) return;
-    setIsPlaying(true);
-    setActiveType('normal');
-    try {
-      await playWord(word);
-    } finally {
-      setIsPlaying(false);
-      setActiveType(null);
-    }
-  };
 
   const handlePlaySlowly = async () => {
     if (isPlaying) return;

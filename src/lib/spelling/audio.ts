@@ -82,7 +82,7 @@ export function isFemaleVoice(voice: SpeechSynthesisVoice): boolean {
 }
 
 export function getVoiceDisplayName(voice: SpeechSynthesisVoice): string {
-  let name = voice.name
+  const name = voice.name
     .replace(/^Microsoft\s+/i, '')
     .replace(/\s+Online\s+\(Natural\)/i, ' Natural')
     .replace(/\s+Desktop/i, '')

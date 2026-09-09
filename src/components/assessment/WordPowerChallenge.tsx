@@ -19,7 +19,7 @@ export const WordPowerChallenge: React.FC = () => {
   const [answers, setAnswers] = useState<
     { word: SpellingWord; isCorrect: boolean; responseTimeMs: number; mistakeType?: string }[]
   >([]);
-  const [startTime, setStartTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(() => Date.now());
   const [isCompleted, setIsCompleted] = useState(false);
   const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null);
 
@@ -119,10 +119,10 @@ export const WordPowerChallenge: React.FC = () => {
         </div>
 
         <button
-          onClick={() => router.push('/adventure')}
+          onClick={() => router.push('/dashboard')}
           className="w-full flex items-center justify-center gap-2 py-4 px-8 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black text-lg shadow-xl shadow-amber-500/25 hover:scale-105 transition cursor-pointer"
         >
-          <span>Begin Your Word Adventure</span>
+          <span>Go to Student Dashboard</span>
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>
@@ -136,9 +136,17 @@ export const WordPowerChallenge: React.FC = () => {
         <span className="text-amber-400 flex items-center gap-1.5">
           <Sparkles className="w-4 h-4" /> Word Power Challenge
         </span>
-        <span className="text-slate-300">
-          Word {currentIndex + 1} of {ASSESSMENT_WORDS.length}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-slate-300">
+            Word {currentIndex + 1} of {ASSESSMENT_WORDS.length}
+          </span>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="text-xs text-amber-400 hover:text-amber-300 underline font-semibold transition"
+          >
+            Skip to Dashboard
+          </button>
+        </div>
       </div>
 
       {/* Progress Bar */}

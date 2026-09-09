@@ -59,11 +59,11 @@ export const Navbar: React.FC = () => {
               </div>
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-amber-300 via-indigo-200 to-purple-300 bg-clip-text text-transparent">
-                SpellQuest AI
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-1.5">
+                SpellQuest
               </span>
               <span className="text-[10px] text-slate-300 font-bold tracking-wider uppercase hidden sm:inline">
-                Listen • Spell • Master
+                Listen. Spell. Learn. Master.
               </span>
             </div>
           </Link>

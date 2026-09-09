@@ -105,7 +105,7 @@ export const MobileTopHeader: React.FC = () => {
             {isLoggedIn ? `${greeting}! 👋` : 'Welcome! 👋'}
           </span>
           <span className="text-sm font-black text-white tracking-tight leading-snug">
-            {isLoggedIn ? state.profile.name : 'SpellQuest AI'}
+            {isLoggedIn ? state.profile.name : 'SpellQuest'}
           </span>
         </div>
       </Link>

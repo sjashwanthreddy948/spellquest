@@ -46,11 +46,9 @@ function PlayHubContent() {
   const [earnedSessionXp, setEarnedSessionXp] = useState(0);
 
   const activeWorld = state.worlds.find((w) => w.id === worldIdParam) || state.worlds[0];
+  const currentStageObj = activeWorld.stages.find((s) => s.stageNumber === stageNumParam);
+  const targetWords = currentStageObj?.wordsCount || 5;
   const allWords = getAllWords();
-
-  useEffect(() => {
-    loadNextWord();
-  }, [activeMode, worldIdParam]);
 
   const loadNextWord = () => {
     const adaptiveProfile = analyzePerformance(state.attempts);
@@ -65,6 +63,10 @@ function PlayHubContent() {
     setHistoryWordIds((prev) => [...prev.slice(-10), word.id]);
   };
 
+  useEffect(() => {
+    loadNextWord();
+  }, [activeMode, worldIdParam]);
+
   const handleAttempt = (result: VerificationResult, responseTimeMs: number) => {
     if (!currentWord) return;
     const cluesCount = result.cluesUsed || 0;
@@ -75,7 +77,7 @@ function PlayHubContent() {
       responseTimeMs,
       cluesCount > 0,
       activeMode,
-      result.isFirstAttempt ? 1 : 2,
+      1,
       cluesCount
     );
 
@@ -86,11 +88,11 @@ function PlayHubContent() {
   };
 
   const handleNextWord = () => {
-    if (wordCounter >= 10) {
-      // 10-word challenge completed!
+    if (wordCounter >= targetWords) {
+      // Stage challenge completed!
       setIsSessionComplete(true);
       const score = correctCount * 100;
-      const stars = correctCount >= 9 ? 3 : correctCount >= 7 ? 2 : 1;
+      const stars = correctCount >= targetWords ? 3 : correctCount >= Math.ceil(targetWords * 0.6) ? 2 : 1;
       completeStage(worldIdParam, stageNumParam, stars, score);
 
       confetti({
@@ -123,7 +125,7 @@ function PlayHubContent() {
 
   // Mobile Result Screen (Requirement 14)
   if (isSessionComplete) {
-    const accuracy = Math.round((correctCount / 10) * 100);
+    const accuracy = Math.round((correctCount / targetWords) * 100);
 
     return (
       <div className="w-full max-w-sm mx-auto p-6 rounded-3xl bg-slate-900 border border-amber-400/50 text-center space-y-5 shadow-2xl animate-in zoom-in-95 mt-4">
@@ -137,13 +139,13 @@ function PlayHubContent() {
           </span>
           <h2 className="text-2xl font-black text-white mt-1">GREAT JOB!</h2>
           <p className="text-3xl font-black text-amber-300 mt-2">
-            {correctCount} / 10 <span className="text-base text-slate-400">({accuracy}%)</span>
+            {correctCount} / {targetWords} <span className="text-base text-slate-400">({accuracy}%)</span>
           </p>
         </div>
 
         <div className="flex items-center justify-center gap-3 py-1">
           <div className="px-4 py-2 rounded-xl bg-purple-950/60 border border-purple-500/30 text-purple-300 text-xs font-black">
-            +{earnedSessionXp || 850} XP ⭐
+            +{earnedSessionXp || (correctCount * 100)} XP ⭐
           </div>
           <div className="px-4 py-2 rounded-xl bg-amber-950/60 border border-amber-500/30 text-amber-300 text-xs font-black">
             🔥 {state.profile.streakDays} Word Streak

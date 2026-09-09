@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="sqBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="50%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <linearGradient id="sqStar" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded Base -->
+  <rect width="64" height="64" rx="16" fill="#020617" />
+  <rect x="2" y="2" width="60" height="60" rx="14" stroke="url(#sqBg)" stroke-width="2.5" />
+  
+  <!-- Open Book Silhouette -->
+  <path d="M14 44C19 41 27 41 32 44C37 41 45 41 50 44V22C45 19 37 19 32 22C27 19 19 19 14 22V44Z" 
+        fill="#1e293b" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <line x1="32" y1="22" x2="32" y2="44" stroke="#f59e0b" stroke-width="2" />
+  
+  <!-- Golden Magic Star Rising Above Book -->
+  <path d="M32 10L34.2 16.5H41L35.5 20.5L37.6 27L32 23L26.4 27L28.5 20.5L23 16.5H29.8L32 10Z" 
+        fill="url(#sqStar)" stroke="#d97706" stroke-width="1.2" stroke-linejoin="round" />
+</svg>

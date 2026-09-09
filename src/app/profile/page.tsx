@@ -60,7 +60,7 @@ export default function MobileProfilePage() {
   const unlockedBadgesCount = state.achievements.filter((a) => a.unlocked).length;
   const correctCount = state.attempts.filter((a) => a.isCorrect).length;
   const accuracy =
-    state.attempts.length > 0 ? Math.round((correctCount / state.attempts.length) * 100) : 82;
+    state.attempts.length > 0 ? Math.round((correctCount / state.attempts.length) * 100) : 0;
 
   const handleParentUnlock = (e: React.FormEvent) => {
     e.preventDefault();
