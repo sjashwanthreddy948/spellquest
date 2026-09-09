@@ -82,16 +82,25 @@ export const Navbar: React.FC = () => {
               <span>{state.profile.xp.toLocaleString()} XP</span>
             </div>
 
-            {/* Avatar Profile */}
-            <Link
-              href="/dashboard"
-              className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 shadow-md flex items-center justify-center hover:scale-105 transition"
-              title={`${state.profile.name} - Level ${state.profile.level}`}
-            >
-              <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center text-base">
-                {state.profile.avatar}
-              </div>
-            </Link>
+            {/* Avatar or Log In Button */}
+            {state.currentUser?.isLoggedIn ? (
+              <Link
+                href="/dashboard"
+                className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5 shadow-md flex items-center justify-center hover:scale-105 transition"
+                title={`${state.profile.name} - Level ${state.profile.level}`}
+              >
+                <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center text-base">
+                  {state.profile.avatar}
+                </div>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow transition active:scale-95 whitespace-nowrap"
+              >
+                Log In
+              </Link>
+            )}
           </div>
 
         </div>

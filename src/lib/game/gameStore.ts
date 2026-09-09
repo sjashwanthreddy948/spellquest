@@ -62,7 +62,7 @@ export const GUEST_PROFILE: StudentProfile = {
   avatar: '🧙‍♀️',
   title: 'Apprentice Speller',
   companion: 'Sparky the Dragon 🐲',
-  unlockedAvatars: ['🧙‍♀️', '🦊', '🚀', '🐱', '🤖'],
+  unlockedAvatars: ['🧙‍♀️'],
   unlockedTitles: ['Apprentice Speller'],
   unlockedCompanions: ['Sparky the Dragon 🐲'],
 };
@@ -126,7 +126,15 @@ export function useGameStore() {
         if (parsed.profile?.id === 'student-maya-01' || parsed.currentUser?.email === 'maya@spellquest.app') {
           localStorage.removeItem(STORAGE_KEY);
           setState(INITIAL_GAME_STATE);
+        } else if (!parsed.currentUser?.isLoggedIn) {
+          // If not logged in, enforce completely clean INITIAL_GAME_STATE with 0 scores
+          setState(INITIAL_GAME_STATE);
         } else {
+          // If fresh account with legacy 50 coins starter, fix to 0
+          if (parsed.profile && parsed.attempts?.length === 0 && parsed.profile.coins === 50) {
+            parsed.profile.coins = 0;
+            parsed.profile.streakDays = 0;
+          }
           setState(parsed);
         }
       } else {
@@ -176,7 +184,7 @@ export function useGameStore() {
         },
       };
     } else {
-      // New login for this contact - create fresh profile
+      // New login for this contact - create fresh profile with 0 scores
       nextState = {
         ...INITIAL_GAME_STATE,
         currentUser: {
@@ -192,9 +200,12 @@ export function useGameStore() {
           contact: contact.trim(),
           level: 1,
           xp: 0,
-          coins: 50,
-          streakDays: 1,
+          coins: 0,
+          streakDays: 0,
           currentStage: 1,
+          unlockedAvatars: ['🧙‍♀️'],
+          unlockedTitles: ['Apprentice Speller'],
+          unlockedCompanions: ['Sparky the Dragon 🐲'],
         },
         worlds: getFreshWorlds(),
         attempts: [],
@@ -255,10 +266,13 @@ export function useGameStore() {
         companionId,
         avatar,
         xp: 0,
-        coins: 50,
-        streakDays: 1,
+        coins: 0,
+        streakDays: 0,
         currentStage: 1,
         completedAssessment: false,
+        unlockedAvatars: [avatar],
+        unlockedTitles: [titlesByLevel[spellingLevel] || 'Apprentice Speller'],
+        unlockedCompanions: [companionNames[companionId] || 'Sparky the Dragon 🐲'],
       },
       worlds: getFreshWorlds(),
       attempts: [],
@@ -281,9 +295,11 @@ export function useGameStore() {
       }
     }
     const key = state.currentUser?.contact || state.currentUser?.email;
-    if (key) {
+    if (key && state.currentUser?.isLoggedIn) {
       saveUserToRegistry(key, state);
     }
+    // Clean stored session so next load is pristine guest
+    localStorage.removeItem(STORAGE_KEY);
     // Revert to clean guest
     const guestState: GameState = {
       ...INITIAL_GAME_STATE,
@@ -373,6 +389,11 @@ export function useGameStore() {
   };
 
   const completeStage = (worldId: string, stageNumber: number, starsEarned: number, score: number) => {
+    // Only record stage progress and awards after student has logged in
+    if (!state.currentUser?.isLoggedIn) {
+      return;
+    }
+
     let unlockedStageInfo: UnlockedStageNotification | null = null;
 
     const nextWorlds = state.worlds.map((w) => {
@@ -432,10 +453,12 @@ export function useGameStore() {
   };
 
   const updateProfile = (partial: Partial<StudentProfile>) => {
+    if (!state.currentUser?.isLoggedIn) return;
     persist({ ...state, profile: { ...state.profile, ...partial } });
   };
 
   const buyItem = (type: 'avatar' | 'title' | 'companion', name: string, price: number): boolean => {
+    if (!state.currentUser?.isLoggedIn) return false;
     if (state.profile.coins < price) return false;
 
     const nextCoins = state.profile.coins - price;

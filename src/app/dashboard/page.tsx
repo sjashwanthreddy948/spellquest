@@ -124,6 +124,35 @@ export default function MobileDashboardPage() {
         </div>
       </div>
 
+      {/* Guest Notice if unauthenticated */}
+      {!state.currentUser?.isLoggedIn && (
+        <div className="p-4 rounded-3xl bg-indigo-950/70 border-2 border-indigo-500/40 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <div className="space-y-0.5">
+            <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-black text-amber-300">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Guest Explorer Mode (0 Scores)</span>
+            </div>
+            <p className="text-xs text-slate-200">
+              Your profile builds and records scores only after you log in or register!
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow transition active:scale-95 whitespace-nowrap"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/register"
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow transition active:scale-95 whitespace-nowrap"
+            >
+              Build Profile
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Main Adventure Stage Card with Fantasy Backdrop */}
       <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-500/40 group">
         <div className="relative h-44 sm:h-48 w-full">

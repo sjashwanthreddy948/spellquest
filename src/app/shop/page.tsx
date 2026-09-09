@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { ShoppingBag, Coins, Check, Sparkles } from 'lucide-react';
 import { useGameStore } from '@/lib/game/gameStore';
 import { playCoinSound, playClickSound } from '@/lib/spelling/audio';
@@ -140,6 +141,35 @@ export default function MobileShopPage() {
           <span>{state.profile.coins}</span>
         </div>
       </div>
+
+      {/* Guest Notice if unauthenticated */}
+      {!state.currentUser?.isLoggedIn && (
+        <div className="p-4 rounded-3xl bg-amber-950/60 border-2 border-amber-500/40 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <div className="space-y-0.5">
+            <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-black text-amber-300">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Guest Bazaar (0 Coins)</span>
+            </div>
+            <p className="text-xs text-slate-200">
+              Log in or create a profile to earn adventure coins from spelling games and adopt companions!
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/login"
+              className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow transition active:scale-95 whitespace-nowrap"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/register"
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black shadow transition active:scale-95 whitespace-nowrap"
+            >
+              Build Profile
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-900 border border-slate-750">

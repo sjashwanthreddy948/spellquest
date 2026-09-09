@@ -31,6 +31,12 @@ export default function LandingPage() {
   const { state } = useGameStore();
   const isLoggedIn = state.currentUser?.isLoggedIn;
 
+  const liveAttempts = state.attempts.length;
+  const liveCorrect = state.attempts.filter((a) => a.isCorrect).length;
+  const liveAccuracy = liveAttempts > 0 ? Math.round((liveCorrect / liveAttempts) * 100) : 0;
+  const liveMastered = state.srsQueue.filter((i) => i.status === 'mastered').length;
+  const liveReviewDue = state.srsQueue.filter((i) => new Date(i.nextReviewDate) <= new Date()).length;
+
   // Interactive Game Preview state
   const [previewInput, setPreviewInput] = useState('beautifull');
   const [previewChecked, setPreviewChecked] = useState(true);
@@ -457,41 +463,53 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-800">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-2xl">
-                🧙‍♀️
+                {isLoggedIn ? state.profile.avatar : '🧙‍♀️'}
               </div>
               <div>
-                <span className="text-xs font-bold text-slate-400 block">Sample Dashboard</span>
-                <span className="text-lg font-black text-white">Level 4 Speller</span>
+                <span className="text-xs font-bold text-slate-400 block">
+                  {isLoggedIn ? 'Your Active Journey' : 'New Account Preview (Clean State)'}
+                </span>
+                <span className="text-lg font-black text-white">
+                  {isLoggedIn ? state.profile.name : '0 Scores Recorded'}
+                </span>
               </div>
             </div>
 
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-400 font-extrabold text-xs sm:text-sm">
               <Flame className="w-4 h-4 fill-amber-400" />
-              <span>7 Day Streak</span>
+              <span>{isLoggedIn ? `${state.profile.streakDays} Day Streak` : '0 Day Streak'}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-4 rounded-2xl bg-slate-950/80 border-2 border-slate-750">
               <span className="text-[11px] font-bold text-slate-300 uppercase">Accuracy</span>
-              <p className="text-2xl font-black text-emerald-400 mt-1">82%</p>
+              <p className="text-2xl font-black text-emerald-400 mt-1">
+                {isLoggedIn ? `${liveAccuracy}%` : '0%'}
+              </p>
             </div>
             <div className="p-4 rounded-2xl bg-slate-950/80 border-2 border-slate-750">
               <span className="text-[11px] font-bold text-slate-300 uppercase">Words Practiced</span>
-              <p className="text-2xl font-black text-white mt-1">347</p>
+              <p className="text-2xl font-black text-white mt-1">
+                {isLoggedIn ? liveAttempts : 0}
+              </p>
             </div>
             <div className="p-4 rounded-2xl bg-slate-950/80 border-2 border-slate-750">
               <span className="text-[11px] font-bold text-slate-300 uppercase">Words Mastered</span>
-              <p className="text-2xl font-black text-amber-300 mt-1">218</p>
+              <p className="text-2xl font-black text-amber-300 mt-1">
+                {isLoggedIn ? liveMastered : 0}
+              </p>
             </div>
             <div className="p-4 rounded-2xl bg-slate-950/80 border-2 border-slate-750">
               <span className="text-[11px] font-bold text-slate-300 uppercase">Review Due</span>
-              <p className="text-2xl font-black text-indigo-300 mt-1">4 words</p>
+              <p className="text-2xl font-black text-indigo-300 mt-1">
+                {isLoggedIn ? `${liveReviewDue} words` : '0 words'}
+              </p>
             </div>
           </div>
 
           <p className="text-[11px] text-slate-400 text-center italic">
-            * Dashboard values reflect your authenticated student journey and are saved securely to your account.
+            * Accounts start clean with 0 scores. Scores, coins, and streaks build up exclusively as students practice after logging in.
           </p>
         </div>
       </section>
